@@ -1,15 +1,17 @@
 /*
  * LDR Experiment
  * Author: Corbin Murrow
- * Date: 12 October 2015
- * Version: 1.0
+ * Date: 13 October 2015
+ * Version: 1.1
  * 
- * This tool is meant to be run on the ATmega 328 while connected via the COM port 
- * with PuTTY. This allows for logging of data output for other processing. Data
- * will be supplied in a comma separated format to be logged as a CSV and then parsed
+ * This tool is meant to be run on the ATmega 328 while connected to PC via 
+ * USB cable while running PuTTY to monitor the COM port. This allows for 
+ * logging of data output to a file for other processing. Data will be 
+ * output in a comma separated format to be logged as a CSV and then parsed
  * with Excel.
  * 
  * ======= VERSION HISTORY =======
+ * Version 1.1: Added standard deviation calculation - CM - 13 October 2015
  * Version 1.0: Initial commint - CM - 12 October 2015
  */
 
@@ -18,8 +20,10 @@
 
 const int distances = 16;
 
-int left[distances];
-int right[distances];
+int leftAvg[distances];
+int rightAvg[distances];
+int leftStDev[distances];
+int rightStDev[distances];
 
 void setup() 
 {
@@ -47,21 +51,38 @@ void loop()
     wait();
 
     const int samples = 100;
-    int leftvalues[samples]; 
-    int rightvalues[samples];
+    int leftValues[samples]; 
+    int rightValues[samples];
 
     for (int i = 0; i < samples; i++)
     {
-      leftvalues[i] = analogRead(leftLDR);
-      rightvalues[i] = analogRead(rightLDR);
+      leftValues[i] = analogRead(leftLDR);
+      rightValues[i] = analogRead(rightLDR);
     }
 
-    left[index] = average(leftvalues, samples);
-    right[index] = average(rightvalues, samples);
+    leftAvg[index] = average(leftValues, samples);
+    rightAvg[index] = average(rightValues, samples);
+    leftStDev[index] = standardDeviation(leftAvg[index], leftValues, samples);
+    rightStDev[index] = standardDeviation(rightAvg[index], rightValues, samples);
     index++;
   }
 
   displayandhalt();
+}
+
+int standardDeviation(int avg, int* array, int length)
+{
+  int sumDiffSquared;
+  int variance;
+  
+  for (int i = 0; i < length; i++)
+  {
+    sumDiffSquared += sq(array[i]-avg);
+  }
+
+  variance = (int)((float)sumDiffSquared/(float)length);
+
+  return (int)sqrt(variance);
 }
 
 int average(int* array, int length)
@@ -73,8 +94,7 @@ int average(int* array, int length)
     sum += (float)array[i];
   }
 
-  return (int)(sum/(float)length);
-  
+  return (int)(sum/(float)length); 
 }
 
 void wait()
@@ -86,15 +106,19 @@ void wait()
 }
 void displayandhalt() 
 { 
-  Serial.println("Distance,Left,Right");
+  Serial.println("Distance,LeftAvg,RightAvg,LeftStDev,RightStDev");
 
   for (int i = 0; i < distances; i++)
   {
     Serial.print(6*i);
     Serial.print(",");
-    Serial.print(left[i]);
+    Serial.print(leftAvg[i]);
     Serial.print(",");
-    Serial.println(right[i]);
+    Serial.print(rightAvg[i]);
+    Serial.print(",");
+    Serial.print(leftStDev[i]);
+    Serial.print(",");
+    Serial.println(rightStDev[i]);
   }
 
   Serial.end();
