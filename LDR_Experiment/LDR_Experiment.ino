@@ -1,8 +1,8 @@
 /*
  * LDR Experiment
  * Author: Corbin Murrow
- * Date: 13 October 2015
- * Version: 1.1
+ * Date: 25 January 2016
+ * Version: 1.2
  * 
  * This tool is meant to be run on the ATmega 328 while connected to PC via 
  * USB cable while running PuTTY to monitor the COM port. This allows for 
@@ -11,12 +11,13 @@
  * with Excel.
  * 
  * ======= VERSION HISTORY =======
+ * Version 1.2: Updated code to use new BOEbot library - CM - 25 January 2016
  * Version 1.1: Added standard deviation calculation - CM - 13 October 2015
  * Version 1.0: Initial commint - CM - 12 October 2015
  */
 
-#define leftLDR 5
-#define rightLDR 3
+#include <BOEbot.h>
+#include <Servo.h>
 
 const int distances = 16;
 
@@ -27,11 +28,9 @@ int rightStDev[distances];
 
 void setup() 
 {
-  Serial.begin(115200);
+  initialize();
+  
   Serial.println("Photoresistor Experiment\n");
-
-  pinMode(leftLDR, INPUT);
-  pinMode(rightLDR, INPUT);
 }
 
 void loop() 
@@ -56,8 +55,8 @@ void loop()
 
     for (int i = 0; i < samples; i++)
     {
-      leftValues[i] = analogRead(leftLDR);
-      rightValues[i] = analogRead(rightLDR);
+      leftValues[i] = getLeftLight();
+      rightValues[i] = getRightLight();
     }
 
     leftAvg[index] = average(leftValues, samples);
